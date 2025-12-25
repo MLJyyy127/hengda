@@ -1,0 +1,89 @@
+/* 左侧样式 */
+.contact-left h1 strong {
+	display: block;
+	color: #777;
+	font-size: 1.6rem;
+}
+.contact-left h1 span {
+	display: block;
+	font-size: 1.2rem;
+	font-weight: 500;
+	margin-top: 10px;
+}
+.contact-left ul {
+	padding: 0;
+}
+.contact-left li {
+	display: block;
+	width: 100%;
+	padding: 0.5rem;
+	color: #777;
+	margin-top: 17px;
+}
+.contact-left li a {
+	color: #777;
+}
+/* 招聘信息页面 */
+/* recruit.css - 招聘面板样式 */
+
+.recruit-panel {
+	border: 1px solid #e0e0e0;
+	border-radius: 5px;
+	margin-bottom: 15px;
+	background: #fff;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.panel-header {
+	background: #f8f9fa;
+	padding: 18px 25px;
+	cursor: pointer;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	border-bottom: 1px solid #e0e0e0;
+	transition: background 0.3s ease;
+}
+
+.panel-header:hover {
+	background: #e9ecef;
+}
+
+.panel-header h4 {
+	margin: 0;
+	color: #333;
+	font-size: 16px;
+	font-weight: 600;
+}
+
+.panel-header .arrow {
+	color: #666;
+	font-size: 12px;
+	transition: transform 0.3s ease;
+}
+
+.panel-content {
+	display: none;
+}
+
+.panel-body {
+	padding: 25px;
+	line-height: 1.7;
+	color: #555;
+}
+
+.panel-body p {
+	margin: 0;
+	text-align: justify;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+	.panel-header {
+		padding: 15px 20px;
+	}
+
+	.panel-body {
+		padding: 20px;
+	}
+}
