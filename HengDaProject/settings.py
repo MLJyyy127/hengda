@@ -197,3 +197,9 @@ SESSION_COOKIE_SECURE = False
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
+
+try:
+    from .local_settings import *
+except ImportError:
+    pass
+
