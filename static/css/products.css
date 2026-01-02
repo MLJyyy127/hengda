@@ -242,3 +242,12 @@
 		font-size: 22px;
 	}
 }
+
+/* 产品热度排行 */
+.hot-title i {
+	font-style: normal !important;
+	margin-left: 10px;
+}
+.hot-title {
+	line-height: 2.428571;
+}

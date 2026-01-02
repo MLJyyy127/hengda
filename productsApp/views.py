@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from .models import Product
 from django.core.paginator import Paginator
 from django.shortcuts import get_object_or_404
+from django.db.models import F  # 引入 F 表达式
 
 def products(request,productName):
     submenu = productName
@@ -78,12 +79,22 @@ def products(request,productName):
     )
 
 def productDetail(request,id):
-    product = get_object_or_404(Product,id=id)
-    product.views += 1
+    # 1. 使用 F 表达式直接在数据库层面增加浏览量，避免多线程冲突
+    # 这里 filter 选中对应 ID 的产品，然后 update
+    Product.objects.filter(id=id).update(views=F('views') + 1)
+    
+    # 2. 获取该产品对象用于页面展示
+    product = get_object_or_404(Product, id=id)
+    
+    # 3. 获取热度排行（前 5 名浏览量最高的产品）
+    # 这里可以放在 context 里传给前端，也可以写个自定义 tag
+    hot_products = Product.objects.order_by('-views')[:5]
+
     product.save()
     return render(
         request,'productDetail.html',{
             'active_menu':'products',
-            'product':product
+            'product':product,
+            'hot_products': hot_products  # 传给详情页，展示侧边栏
         }
     )
