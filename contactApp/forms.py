@@ -1,5 +1,6 @@
 from django import forms
 from .models import Resume
+from .models import QuickFeedback
 
 class ResumeForm(forms.ModelForm):
     class Meta:
@@ -22,3 +23,9 @@ class ResumeForm(forms.ModelForm):
             'photo':forms.FileInput(),
             'birth': forms.TextInput(attrs={'id': 'id_birth'}),
         }
+
+# 留言表单
+class FeedbackForm(forms.ModelForm):
+    class Meta:
+        model = QuickFeedback
+        fields = ['name', 'phone', 'message']

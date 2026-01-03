@@ -105,4 +105,17 @@ def post_save_resume(sender, instance, **kwargs):
         email_body = '抱歉！恒达科技招聘初试未通过！'
         send_status = send_mail(email_title, email_body, EMAIL_FROM, [email])
     
-    
+
+# 留言模型
+class QuickFeedback(models.Model):
+    name = models.CharField('姓名', max_length=20)
+    phone = models.CharField('电话', max_length=20)
+    message = models.TextField('需求说明')
+    add_time = models.DateTimeField('提交时间', auto_now_add=True)
+
+    class Meta:
+        verbose_name = '快捷留言'
+        verbose_name_plural = verbose_name
+
+    def __str__(self):
+        return self.name

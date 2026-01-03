@@ -8,7 +8,7 @@
 		<title>恒达科技| {% block title %}{% endblock  %} </title>
 		<link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" />
 		<link rel="stylesheet" href="{% static 'css/style.css' %}" />
-		
+		<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/4.7.0/css/font-awesome.css">
 		<script src="{% static 'js/jquery-3.2.1.min.js' %}"></script>
 		<script src="{% static 'js/bootstrap.min.js' %}"></script>
 		
@@ -187,7 +187,33 @@
 			<div class="row" id="patent-footer">
 				<p>&copy 2019 Python Web 企业门户 版权所有 | 苏 ICP 备 19006378 号</p>
 			</div>
+
+			{% comment %} 悬浮窗 {% endcomment %}
+			<div id="feedback-launcher">
+				<i class="fa fa-comments-o"></i>
+			</div>
+			
+			<div id="feedback-window">
+				<div class="feedback-header">
+					<span style="font-style: normal;">快速留言反馈</span>
+					<button type="button" id="close-feedback">&times;</button>
+				</div>
+				<form id="feedback-form">
+					{% csrf_token %}
+					<div class="form-group">
+						<input type="text" name="name" class="form-control" placeholder="您的姓名" required>
+					</div>
+					<div class="form-group">
+						<input type="text" name="phone" class="form-control" placeholder="联系电话" required>
+					</div>
+					<div class="form-group">
+						<textarea name="message" class="form-control" rows="3" placeholder="写下您的需求..." required></textarea>
+					</div>
+					<button type="submit" class="btn btn-primary btn-block" style="border-radius: 20px;">立即发送</button>
+				</form>
+			</div>
 		</div>
+
 		<script>
 			$(function () {
 				$(".dropdown").mouseover(function () {
@@ -205,5 +231,55 @@
 			$('#{{sub_menu}}').addClass("active");
 		</script>
 		
+		<script type="text/javascript">
+			$(document).ready(function() {
+				// 1. 点击圆球弹出/收起
+				$('#feedback-launcher').on('click', function(e) {
+					$('#feedback-window').stop().fadeToggle(300);
+					e.stopPropagation(); // 阻止事件冒泡
+				});
+		
+				// 2. 点击叉号关闭
+				$('#close-feedback').on('click', function() {
+					$('#feedback-window').fadeOut(300);
+				});
+		
+				// 3. 点击弹窗内部不关闭
+				$('#feedback-window').on('click', function(e) {
+					e.stopPropagation();
+				});
+		
+				// 4. 点击页面其他地方自动关闭
+				$(document).on('click', function() {
+					$('#feedback-window').fadeOut(300);
+				});
+			});
+			$('#feedback-form').submit(function(e) {
+				e.preventDefault(); // 阻止页面刷新
+				
+				$.ajax({
+					url: "/contactApp/quick_feedback/",  // 请确保你的 urls.py 里这个路径是对的
+					type: "POST",
+					data: $(this).serialize(),
+					success: function(data) {
+						if (data.status === 'success') {
+							// 1. 弹出感谢语
+							alert("感谢提交！我们会尽快回复您。");
+							
+							// 2. 清空表单内容
+							$('#feedback-form')[0].reset();
+							
+							// 3. 自动收起小窗口
+							$('#feedback-window').fadeOut(300);
+						} else {
+							alert("提交失败：" + data.msg);
+						}
+					},
+					error: function() {
+						alert("网络连接失败，请稍后再试。");
+					}
+				});
+			});
+		</script>
 	</body>
 </html>

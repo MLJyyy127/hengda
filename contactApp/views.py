@@ -1,5 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.http import JsonResponse
+from .forms import FeedbackForm
 
 from .forms import ResumeForm
 
@@ -28,3 +30,15 @@ def recruit(request):
             'resumeForm':resumeForm,
         }
     )
+
+
+# 留言视图
+def quick_feedback(request):
+    if request.method == 'POST':
+        form = FeedbackForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return JsonResponse({'status': 'success', 'msg': '提交成功！我们会尽快联系您。'})
+        else:
+            return JsonResponse({'status': 'error', 'msg': '输入有误，请检查格式。'})
+    return JsonResponse({'status': 'error', 'msg': '非法请求'})
