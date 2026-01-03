@@ -300,3 +300,81 @@
 	color: #999;
 	line-height: 1;
 }
+/* 输入框校验失败时的红色边框和阴影 */
+.input-error {
+    border-color: #ff4d4f !important;
+    box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2) !important;
+}
+
+/* 输入框正常（成功）时的视觉提示（可选） */
+.input-success {
+    border-color: #52c41a !important;
+}
+
+/* 按钮禁用状态样式 */
+#fb-submit-btn:disabled {
+    background: #ccc !important;
+    border-color: #ccc !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+/* 职位流程 */
+/* 职位热度火焰标签 */
+.hot-tag {
+    background: #ff4d4f;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    margin-left: 10px;
+}
+
+/* 状态机步骤条 */
+.hiring-steps {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+    padding: 0;
+    list-style: none;
+    position: relative;
+}
+/* 中间连接线 */
+.hiring-steps::before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: #e0e0e0;
+    z-index: 1;
+}
+.step-node {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+.step-circle {
+    width: 30px;
+    height: 30px;
+    background: #fff;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    display: inline-block;
+    line-height: 26px;
+    color: #999;
+    font-weight: bold;
+}
+.step-node.active .step-circle {
+    background: #005197;
+    border-color: #005197;
+    color: #fff;
+}
+.step-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 12px;
+    color: #666;
+}

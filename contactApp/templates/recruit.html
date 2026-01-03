@@ -1,392 +1,340 @@
 {% extends 'base.html' %}
 {% load static %} 
 {%load widget_tweaks %}
-{% block title %} 人才招聘 
-{% endblock %} 
+{% block title %} 人才招聘 {% endblock %} 
 
 {% block content %} 
 <link href="{% static 'css/contact.css' %}" rel="stylesheet" />
 <link rel="stylesheet" href="{% static 'js/layui-v2.13.1/layui/css/layui.css' %}">
-<!-- 立即重置 layui 覆盖的关键样式 -->
+
 <style>
     /* 保护 Bootstrap 网格系统 */
-    .row > [class*="col-"] {
-        float: left !important;
-        position: static !important;
+    .row > [class*="col-"] { float: left !important; position: static !important; }
+    .col-md-2.hidden-xs { width: auto !important; }
+
+    /* 实时验证错误样式 */
+    .error-field {
+        border-color: #ff4d4f !important;
+        background-color: #fff2f0 !important;
+        box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2) !important;
     }
-    
-    /* 保护具体的宽度设置 */
-    .col-md-2.hidden-xs {
-        width: auto !important;
+    .error-message {
+        color: #ff4d4f;
+        font-size: 12px;
+        display: block;
+        margin-top: 5px;
+        font-weight: bold;
     }
+    /* 经历字数统计 */
+    #char-count { text-align: right; color: #999; font-size: 12px; }
 </style>
+
 <script src="{% static 'js/layui-v2.13.1/layui/layui.js' %}"></script>
 
-{% comment %} 广告横幅 {% endcomment %}
 <div class="container-fluid">
-	<div class="row" >
-		<img class="img-responsive model-img" src="{% static 'img/recruit1.jpg' %}" />
-	</div>
+    <div class="row" >
+        <img class="img-responsive model-img" src="{% static 'img/recruit1.jpg' %}" />
+    </div>
 </div>
-{% comment %} 主体内容 {% endcomment %}
+
 <div class="container main">
-	<div class="row row-3">
-		{% comment %} 侧边导航栏 {% endcomment %}
-		<div class="col-md-3">
-			<div class="model-title">人才招聘</div>
-			<div class="model-list">
-				<ul class="list-group">
-					<li class="list-group-item" id="contact">
-						<a href="{% url 'contactApp:contact' %}">欢迎咨询</a>
-					</li>
-					<li class="list-group-item" id="recruit">
-						<a href="{% url 'contactApp:recruit' %}">加入恒达</a>
-					</li>
-				</ul>
-			</div>
-		</div>
-		{% comment %} 说明文字和图片 {% endcomment %}
-		<div class="col-md-9">
-			<div class="model-details">
-				{% for ad in AdList %}
-				<div class="recruit-panel">
-					<div class="panel-header" onclick="toggleRecruitPanel(this)">
-						<h4>{{ad.title}}</h4>
-						<span class="arrow">▼</span>
-					</div>
-					<div class="panel-content" {% if forloop.first %}style="display:block"{% endif %}>
-						<div class="panel-body">
-							<p>{{ad.description}}</p>
-						</div>
-					</div>
-				</div>
-				{% endfor %}
-			</div>
+    <div class="row row-3">
+        <div class="col-md-3">
+            <div class="model-title">人才招聘</div>
+            <div class="model-list">
+                <ul class="list-group">
+                    <li class="list-group-item" id="contact"><a href="{% url 'contactApp:contact' %}">欢迎咨询</a></li>
+                    <li class="list-group-item" id="recruit"><a href="{% url 'contactApp:recruit' %}">加入恒达</a></li>
+                </ul>
+            </div>
+        </div>
 
-			
-			<div class="panel panel-default">	
-				<div class="panel-heading">
-					请填写个人简历
-				</div>			
-				<div class="panel-body">
-					<div class="row">
-						<form  id="resumeForm" action="." name="resumeForm" class="form-horizontal" method="post" role="form" enctype="multipart/form-data" onsubmit="return validateForm()">
-							{% csrf_token %}
-							{% comment %} 左侧 {% endcomment %}
-							<div class="col-md-6"> 
-								<div class="form-group">
-									<label class="col-sm-3 control-label required-label">姓名:</label>
-									<div class="col-sm-9">
-										{{resumeForm.name|add_class:"form-control"|attr:"placeholder=请填写姓名"|attr:"required"}}
-										<span id="nameError" class="error-message"> </span>
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label class="col-sm-3 control-label required-label">身份证号：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.personID|add_class:"form-control"|attr:"placeholder=请填写身份证号"|attr:"required"|attr:"maxlength=18"|attr:"minlength=18"}}
-										<span id="personIDError" class="error-message"></span>
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label class="col-sm-3 control-label required-label">性别：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.sex|add_class:"form-control"|attr:"required"}}
-										<span id="sexError" class="error-message"></span>
+        <div class="col-md-9">
+            <div class="model-details">
+                {% for ad in AdList %}
+                <div class="recruit-panel" style="border: 1px solid #eee; margin-bottom: 20px; border-radius: 4px;">
+                    <div class="panel-header" onclick="toggleRecruitPanel(this)" style="padding: 15px; cursor: pointer; background: #f8f9fa; display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0;">
+                            {{ad.title}}
+                            <span class="hot-tag"><i class="fa fa-fire"></i> {{ ad.apply_count }} 人已投递</span>
+                        </h4>
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="panel-content" {% if forloop.first %}style="display:block"{% else %}style="display:none"{% endif %} style="padding: 15px; border-top: 1px solid #eee;">
+                        <div class="panel-body">
+                            <p><strong>岗位要求：</strong></p>
+                            <p>{{ad.description}}</p>
+                            
+                            <div style="margin-top: 20px;">
+                                <h5 style="color: #005197;"><i class="fa fa-map-signs"></i> 标准应聘流程：</h5>
+                                <ul class="hiring-steps">
+                                    <li class="step-node {% if ad.some_status_logic %}active{% endif %}">
+                                    <li class="step-node active">
+                                        <span class="step-circle">1</span>
+                                        <span class="step-text">简历投递</span>
+                                    </li>
+                                    <li class="step-node">
+                                        <span class="step-circle">2</span>
+                                        <span class="step-text">初选审核</span>
+                                    </li>
+                                    <li class="step-node">
+                                        <span class="step-circle">3</span>
+                                        <span class="step-text">复试考核</span>
+                                    </li>
+                                    <li class="step-node">
+                                        <span class="step-circle">4</span>
+                                        <span class="step-text">收到通知</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="quickApply('{{ad.id}}')">立即应聘</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
 
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label for="id_birth" class="col-sm-3 control-label required-label">出生日期：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.birth|add_class:"form-control"|attr:"id=id_birth"|attr:"required"}}
-										<span id="birthError" class="error-message"></span>
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label class="col-sm-3 control-label required-label">邮箱：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.email|add_class:"form-control"|attr:"type=email"|attr:"required"|attr:"placeholder=example@domain.com"}}
-										<span id="emailError" class="error-message"></span>
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label class="col-sm-3 control-label required-label">学历：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.edu|add_class:"form-control"|attr:"required"}}
-										<span id="eduError" class="error-message"> </span>
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label class="col-sm-3 control-label required-label">毕业院校：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.school|add_class:"form-control"|attr:"required"|attr:"placeholder=请填写毕业院校"}}
-										<span id="schoolError" class="error-message"> </span>
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label class="col-sm-3 control-label required-label">专业：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.major|add_class:"form-control"|attr:"required"|attr:"placeholder=请填写专业"}}
-										<span id="majorError" class="error-message"></span>
-									</div>
-								</div>
-								<div class="form-group"> 
-									<label class="col-sm-3 control-label required-label">申请职位：</label>
-									<div class="col-sm-9"> 
-										{{resumeForm.position|add_class:"form-control"|attr:"required"|attr:"placeholder=请选择或填写申请职位"}}
-										<span id="positionError" class="error-message"></span>
-									</div>
-								</div>
-							</div>
-							{% comment %} 右侧 {% endcomment %}
-							<div class="col-md-6"> 
-								<div class="form-group"> 
-									<div class="col-sm-12" style="text-align:center"> 
-										<img id="profileshow" style="width:120px" src="{% static 'img/sample.jpg' %}">
-									</div>
-									<label class="col-sm-5 control-label required-label">上传证件照片：</label>
-									{{resumeForm.photo|attr:"required"}}
-									<span id="photoError" class="error-message"></span>
-								</div>
-								<div class="form-group"> 							
-									<label class="col-sm-12 control-label required-label">学习或工作经历：</label>
-									<div class="col-sm-12">
-										{{resumeForm.experience|add_class:"form-control"|attr:"rows=6"|attr:"required"|attr:"placeholder=请详细描述您的学习或工作经历..."}}
-										<span id="experienceError" class="error-message"></span>
-									</div>
-								</div>
-							</div>
-							<div class="col-md-12">
-								<center><input type="submit" class="btn btn-primary" value="提交"></input></center>
-							</div>
-						</form>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+            <div class="panel panel-default">    
+                <div class="panel-heading">请填写个人简历</div>            
+                <div class="panel-body">
+                    <div class="row">
+                        <form id="resumeForm" action="." class="form-horizontal" method="post" role="form" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="col-md-6"> 
+                                <div class="form-group">
+                                    <label class="col-sm-3 control-label required-label">姓名:</label>
+                                    <div class="col-sm-9">
+                                        {{resumeForm.name|add_class:"form-control"|attr:"placeholder=请填写姓名"}}
+                                        <span id="nameError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label class="col-sm-3 control-label required-label">身份证号：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.personID|add_class:"form-control"|attr:"placeholder=请填写身份证号"}}
+                                        <span id="personIDError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label class="col-sm-3 control-label required-label">性别：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.sex|add_class:"form-control"}}
+                                        <span id="sexError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label for="id_birth" class="col-sm-3 control-label required-label">出生日期：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.birth|add_class:"form-control"|attr:"id=id_birth"|attr:"readonly=readonly"}}
+                                        <span id="birthError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label class="col-sm-3 control-label required-label">邮箱：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.email|add_class:"form-control"|attr:"placeholder=example@domain.com"}}
+                                        <span id="emailError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label class="col-sm-3 control-label required-label">学历：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.edu|add_class:"form-control"}}
+                                        <span id="eduError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label class="col-sm-3 control-label required-label">毕业院校：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.school|add_class:"form-control"|attr:"placeholder=请填写毕业院校"}}
+                                        <span id="schoolError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label class="col-sm-3 control-label required-label">专业：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.major|add_class:"form-control"|attr:"placeholder=请填写专业"}}
+                                        <span id="majorError" class="error-message"></span>
+                                    </div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label class="col-sm-3 control-label required-label">申请职位：</label>
+                                    <div class="col-sm-9"> 
+                                        {{resumeForm.ad|add_class:"form-control"|attr:"id=id_ad"|attr:"placeholder=请填写申请职位"}}
+                                        <span id="adError" class="error-message"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6"> 
+                                <div class="form-group"> 
+                                    <div class="col-sm-12" style="text-align:center"> 
+                                        <img id="profileshow" style="width:120px; height:140px; border:1px solid #ddd;" src="{% static 'img/sample.jpg' %}">
+                                    </div>
+                                    <label class="col-sm-5 control-label required-label">上传证件照片：</label>
+                                    {{resumeForm.photo}}
+                                    <span id="photoError" class="error-message"></span>
+                                </div>
+                                <div class="form-group">                             
+                                    <label class="col-sm-12 control-label required-label">学习或工作经历：</label>
+                                    <div class="col-sm-12">
+                                        <div id="char-count">0 / 500 字</div>
+                                        {{resumeForm.experience|add_class:"form-control"|attr:"rows=6"|attr:"placeholder=请详细描述您的学习或工作经历..."}}
+                                        <span id="experienceError" class="error-message"></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <center><input type="submit" class="btn btn-primary" style="width:150px" value="提交"></center>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-{% comment %} 控制面板展开和关闭 {% endcomment %}
-<script>
-	function toggleRecruitPanel(header) {
-		var content = header.nextElementSibling;
-		var arrow = header.querySelector('.arrow');
-		
-		if (content.style.display === 'block') {
-			content.style.display = 'none';
-			arrow.style.transform = 'rotate(0deg)';
-		} else {
-			content.style.display = 'block';
-			arrow.style.transform = 'rotate(180deg)';
-		}
-	}
-</script>
 
-{% comment %} 显示照片缩略图 {% endcomment %}
 <script>
-	$(function(){
-		$('#id_photo').on('change', function() {
-			var r=new FileReader();
-			f=document.getElementById('id_photo').files[0];
-			r.readAsDataURL(f);
-			r.onload=function(e){
-				document.getElementById('profileshow').src=this.result;
-			};
-		});
-	});
-</script>
+    // 1. 保留原有的折叠面板功能
+    function toggleRecruitPanel(header) {
+        var content = header.nextElementSibling;
+        var arrow = header.querySelector('.arrow');
+        if (content.style.display === 'block') {
+            content.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+        } else {
+            content.style.display = 'block';
+            arrow.style.transform = 'rotate(180deg)';
+        }
+    }
 
-{% comment %} 表单验证 {% endcomment %}
-<script>	
-	// 标记错误
-	function markError(fieldId, errorId, message) {
-		$('#' + fieldId).addClass('error-field');
-		$('#' + errorId).text(message);
-	}
-	
-	// 判断是否年满 18 周岁
-	function isAdult(birthDate) {
-		var parts = birthDate.split('-'); // yyyy-MM-dd
-		var birth = new Date(parts[0], parts[1] - 1, parts[2]);
-		var today = new Date();
-	
-		var age = today.getFullYear() - birth.getFullYear();
-		var monthDiff = today.getMonth() - birth.getMonth();
-	
-		if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-			age--;
-		}
-		return age >= 18;
-	}
-	
-	// 获取 18 年前的最大出生日期
-	function getMaxBirthDate() {
-		var today = new Date();
-		var maxDate = new Date(
-			today.getFullYear() - 18,
-			today.getMonth(),
-			today.getDate()
-		);
-	
-		var y = maxDate.getFullYear();
-		var m = ('0' + (maxDate.getMonth() + 1)).slice(-2);
-		var d = ('0' + maxDate.getDate()).slice(-2);
-	
-		return y + '-' + m + '-' + d;
-	}
-	
-	
-	function validateForm() {
-		// 清空旧状态
-		$('.error-field').removeClass('error-field');
-		$('.error-message').text('');
-		$('#validationAlert').hide();
-	
-		var isValid = true;
-		var errorFields = [];
-	
-		// 姓名
-		var name = $('#id_name').val().trim();
-		if (!name) {
-			markError('id_name', 'nameError', '请输入姓名');
-			errorFields.push('姓名');
-			isValid = false;
-		}
-	
-		// 身份证
-		var personID = $('#id_personID').val().trim();
-		var idCardRegex = /^\d{17}[\dXx]$/;
-		if (!personID) {
-			markError('id_personID', 'personIDError', '请输入身份证号');
-			errorFields.push('身份证号');
-			isValid = false;
-		} else if (!idCardRegex.test(personID)) {
-			markError('id_personID', 'personIDError', '身份证号格式不正确');
-			errorFields.push('身份证号');
-			isValid = false;
-		}
-	
-		// 性别
-		if (!$('#id_sex').val()) {
-			markError('id_sex', 'sexError', '请选择性别');
-			errorFields.push('性别');
-			isValid = false;
-		}
-	
-		// 出生日期
-		var birth = $('#id_birth').val();
-		if (!birth) {
-			markError('id_birth', 'birthError', '请选择出生日期');
-			errorFields.push('出生日期');
-			isValid = false;
-		} else if (!isAdult(birth)) {
-			markError('id_birth', 'birthError', '申请人必须年满18周岁');
-			errorFields.push('出生日期');
-			isValid = false;
-		}
-	
-		// 邮箱
-		var email = $('#id_email').val().trim();
-		var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-		if (!email) {
-			markError('id_email', 'emailError', '请输入邮箱地址');
-			errorFields.push('邮箱');
-			isValid = false;
-		} else if (!emailRegex.test(email)) {
-			markError('id_email', 'emailError', '邮箱格式不正确');
-			errorFields.push('邮箱');
-			isValid = false;
-		}
-	
-		// 学历
-		if (!$('#id_edu').val()) {
-			markError('id_edu', 'eduError', '请选择学历');
-			errorFields.push('学历');
-			isValid = false;
-		}
-	
-		// 毕业院校
-		if (!$('#id_school').val().trim()) {
-			markError('id_school', 'schoolError', '请输入毕业院校');
-			errorFields.push('毕业院校');
-			isValid = false;
-		}
-	
-		// 专业
-		if (!$('#id_major').val().trim()) {
-			markError('id_major', 'majorError', '请输入专业');
-			errorFields.push('专业');
-			isValid = false;
-		}
-	
-		// 申请职位
-		if (!$('#id_position').val()) {
-			markError('id_position', 'positionError', '请选择或填写申请职位');
-			errorFields.push('申请职位');
-			isValid = false;
-		}
-	
-		// 照片
-		if (!$('#id_photo').val()) {
-			$('#id_photo').addClass('error-field');
-			$('#photoError').text('请上传证件照片');
-			errorFields.push('证件照片');
-			isValid = false;
-		}
-	
-		// 经历
-		var experience = $('#id_experience').val().trim();
-		if (!experience) {
-			markError('id_experience', 'experienceError', '请输入学习或工作经历');
-			errorFields.push('学习或工作经历');
-			isValid = false;
-		} else if (experience.length < 10) {
-			markError('id_experience', 'experienceError', '至少填写 10 个字符');
-			errorFields.push('学习或工作经历');
-			isValid = false;
-		}
-	
-		// 统一提示 & 滚动
-		if (!isValid) {
-			$('#validationAlert')
-				.html('请完善以下必填字段：<br>' + errorFields.join('、'))
-				.show();
-	
-			$('html, body').animate({
-				scrollTop: $('.error-field').first().offset().top - 100
-			}, 500);
-		}
-	
-		return isValid;
-	}
-		
-	$(function () {
-		// laydate做限制
-		layui.use('laydate', function(){
-			layui.laydate.render({
-				elem: '#id_birth',
-				type: 'date',
-				format: 'yyyy-MM-dd',
-				max: getMaxBirthDate()
-			});
-		});
-		
-	
-		// 聚焦时清除错误
-		$('input, select, textarea').on('focus', function() {
-			$(this).removeClass('error-field');
-			var id = $(this).attr('id');
-			if (id) {
-				$('#' + id.replace('id_', '') + 'Error').text('');
-			}
-		});
-	
-		// 身份证长度限制
-		$('#id_personID').on('input', function () {
-			this.value = this.value.substr(0, 18);
-		});
-	});
-	</script>
-	
+    // 2. 保留原有的照片预览功能
+    $(function(){
+        $('#id_photo').on('change', function() {
+            var r = new FileReader();
+            var f = this.files[0];
+            if (f) {
+                r.readAsDataURL(f);
+                r.onload = function(e){
+                    document.getElementById('profileshow').src = this.result;
+                };
+                validateSingleField('id_photo'); // 实时验证
+            }
+        });
+    });
+
+    // 3. 增强的校验逻辑（包含18岁限制和正则）
+    function isAdult(birthDate) {
+        if(!birthDate) return false;
+        var parts = birthDate.split('-');
+        var birth = new Date(parts[0], parts[1] - 1, parts[2]);
+        var today = new Date();
+        var age = today.getFullYear() - birth.getFullYear();
+        var m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age >= 18;
+    }
+
+    function validateSingleField(fieldId) {
+        var $el = $('#' + fieldId);
+        var val = $el.val() ? $el.val().trim() : "";
+        var errorId = fieldId.replace('id_', '') + 'Error';
+        var msg = "";
+
+        // 根据 ID 执行不同的验证规则
+        switch(fieldId) {
+            case 'id_name':
+                if(!val) msg = "请输入姓名";
+                break;
+            case 'id_personID':
+                if(!val) msg = "请输入身份证号";
+                else if(!/^\d{17}[\dXx]$/.test(val)) msg = "身份证号格式不正确";
+                break;
+            case 'id_email':
+                if(!val) msg = "请输入邮箱";
+                else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) msg = "邮箱格式不正确";
+                break;
+            case 'id_birth':
+                if(!val) msg = "请选择出生日期";
+                else if(!isAdult(val)) msg = "必须年满18周岁";
+                break;
+            case 'id_experience':
+                if(!val) msg = "请输入经历";
+                else if(val.length < 10) msg = "至少填写10个字";
+                $('#char-count').text(val.length + ' / 500 字');
+                break;
+            case 'id_photo':
+                if(!$el.val()) msg = "请上传照片";
+                break;
+            case 'id_ad':
+                if(!val) msg = "请选择申请职位";
+                break;
+            
+            default:
+                if(!val && $el.prop('required')) msg = "此项必填";
+        }
+
+        if(msg) {
+            $el.addClass('error-field');
+            $('#' + errorId).text(msg);
+            return false;
+        } else {
+            $el.removeClass('error-field');
+            $('#' + errorId).text('');
+            return true;
+        }
+    }
+
+    // 4. 绑定实时事件 (input, change, blur)
+    $(document).ready(function() {
+        // Laydate 初始化并绑定实时校验
+        layui.use('laydate', function(){
+            layui.laydate.render({
+                elem: '#id_birth',
+                trigger: 'click',
+                done: function(value){
+                    $('#id_birth').val(value);
+                    validateSingleField('id_birth');
+                }
+            });
+        });
+
+        // 绑定文本框输入事件
+        $('#id_name, #id_personID, #id_email, #id_school, #id_major, #id_experience').on('input blur', function() {
+            validateSingleField($(this).attr('id'));
+        });
+
+        // 绑定下拉框
+        $('#id_sex, #id_edu').on('change', function() {
+            validateSingleField($(this).attr('id'));
+        });
+
+        // 5. 最终提交验证（兜底）
+        $('#resumeForm').on('submit', function(e) {
+            var fields = ['id_name', 'id_personID', 'id_sex', 'id_birth', 'id_email', 'id_edu', 'id_school', 'id_major', 'id_ad', 'id_photo', 'id_experience'];
+            var allValid = true;
+            fields.forEach(function(id) {
+                if(!validateSingleField(id)) allValid = false;
+            });
+
+            if(!allValid) {
+                e.preventDefault();
+                $('html, body').animate({
+                    scrollTop: $('.error-field').first().offset().top - 100
+                }, 500);
+                return false;
+            }
+        });
+    });
+
+    
+    // 快速定位并填充职位的脚本
+    function quickApply(jobId) {
+        // 名字变了，ID也会变，Django默认生成的是 id_ad
+        $('#id_ad').val(jobId); 
+        $('html, body').animate({ scrollTop: $("#resumeForm").offset().top - 50 }, 500);
+    }
+    
+</script>
 {% endblock %}

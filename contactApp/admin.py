@@ -7,7 +7,7 @@ from .models import QuickFeedback
 admin.site.register(Ad)
 
 class ResumeAdmin(admin.ModelAdmin):
-    list_display = ('name','status','personID','birth','edu','school','major','position','image_data')
+    list_display = ('name','status','personID','birth','edu','school','major','ad','image_data')
     
     def image_data(self,obj):
         return mark_safe(u'<img src="%s" width="120px" />'% obj.photo.url)

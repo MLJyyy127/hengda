@@ -5,7 +5,7 @@ from .models import QuickFeedback
 class ResumeForm(forms.ModelForm):
     class Meta:
         model=Resume
-        fields=('name','sex','personID','email','birth','edu','school','major','experience','position','photo')
+        fields=('name','sex','personID','email','birth','edu','school','major','experience','ad','photo')
         sex_list=(
             ('女','女'),
             ('男','男'),

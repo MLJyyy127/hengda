@@ -195,22 +195,49 @@
 			
 			<div id="feedback-window">
 				<div class="feedback-header">
-					<span style="font-style: normal;">快速留言反馈</span>
+					<span id="feedback-title" style="font-style: normal;">快速留言反馈</span>
 					<button type="button" id="close-feedback">&times;</button>
 				</div>
-				<form id="feedback-form">
-					{% csrf_token %}
-					<div class="form-group">
-						<input type="text" name="name" class="form-control" placeholder="您的姓名" required>
+
+				<div id="submit-panel">
+					<form id="feedback-form">
+						{% csrf_token %}
+						<div class="form-group">
+							<input type="text" name="name" class="form-control" placeholder="您的姓名" required>
+						</div>
+						<div class="form-group" style="position: relative;">
+							<input type="text" id="fb-phone" name="phone" class="form-control" placeholder="联系电话" required>
+							<small id="phone-error-msg" style="color: #ff4d4f; display: none; font-size: 12px; margin-top: 5px;">
+								<i class="fa fa-exclamation-circle"></i> 请输入正确的11位手机号
+							</small>
+						</div>
+						<div class="form-group" style="position: relative;">
+							<textarea id="fb-message" name="message" class="form-control" rows="3" placeholder="写下您的需求..." maxlength="200" required></textarea>
+							<div id="char-count" style="text-align: right; font-size: 12px; color: #999; margin-top: 5px;">
+								<span id="current-chars">0</span> / 200 字
+							</div>
+						</div>
+						<button type="submit" id="fb-submit-btn" class="btn btn-primary btn-block" style="border-radius: 20px;">立即发送</button>
+					</form>
+					<div style="text-align: center; margin-top: 10px;">
+						<a href="javascript:void(0);" id="switch-to-query" style="font-size: 12px; color: #666;">已有留言？点击查询进度</a>
 					</div>
+				</div>
+
+				<div id="query-panel" style="display: none;">
 					<div class="form-group">
-						<input type="text" name="phone" class="form-control" placeholder="联系电话" required>
+						<input type="text" id="query-phone" class="form-control" placeholder="请输入提交时的手机号">
 					</div>
-					<div class="form-group">
-						<textarea name="message" class="form-control" rows="3" placeholder="写下您的需求..." required></textarea>
+					<button type="button" id="do-query" class="btn btn-info btn-block" style="border-radius: 20px;">立即查询</button>
+					
+					<div id="query-result" style="margin-top: 15px; font-size: 13px; max-height: 200px; overflow-y: auto; display: none;">
+						</div>
+			
+					<div style="text-align: center; margin-top: 10px;">
+						<a href="javascript:void(0);" id="switch-to-submit" style="font-size: 12px; color: #666;">返回在线留言</a>
 					</div>
-					<button type="submit" class="btn btn-primary btn-block" style="border-radius: 20px;">立即发送</button>
-				</form>
+				</div>
+
 			</div>
 		</div>
 
@@ -233,6 +260,115 @@
 		
 		<script type="text/javascript">
 			$(document).ready(function() {
+				// --- 界面切换逻辑 ---
+				// 切换到查询面板
+				$('#switch-to-query').click(function() {
+					$('#submit-panel').hide();
+					$('#query-panel').fadeIn();
+					$('#feedback-title').text('留言进度查询');
+				});
+
+				// 切换回提交面板
+				$('#switch-to-submit').click(function() {
+					$('#query-panel').hide();
+					$('#submit-panel').fadeIn();
+					$('#feedback-title').text('快速留言反馈');
+				});
+
+				// --- 执行查询逻辑 ---
+				$('#do-query').click(function() {
+					var phone = $('#query-phone').val();
+					if(!phone) { alert("请输入手机号"); return; }
+			
+					$.ajax({
+						url: "{% url 'contactApp:query_feedback' %}", // 需在urls.py配置此路由
+						type: "GET",
+						data: { 'phone': phone },
+						success: function(data) {
+							var resDiv = $('#query-result');
+							resDiv.empty().show();
+							
+							if (data.status === 'success' && data.list.length > 0) {
+								data.list.forEach(function(item) {
+									var statusBtn = item.status === 'completed' ? 'label-success' : 'label-warning';
+									var statusText = item.status === 'completed' ? '已回复' : '处理中';
+									
+									var html = '<div style="border-bottom: 1px dashed #eee; padding: 8px 0;">' +
+											'<div><span class="label ' + statusBtn + '">' + statusText + '</span> <small class="text-muted">' + item.time + '</small></div>' +
+											'<div style="margin-top:5px;"><b>问：</b>' + item.message + '</div>';
+									if(item.reply) {
+										html += '<div style="color: #005197; margin-top:3px;"><b>答：</b>' + item.reply + '</div>';
+									}
+									html += '</div>';
+									resDiv.append(html);
+								});
+							} else {
+								resDiv.append('<div class="text-center text-danger">未找到相关留言记录</div>');
+							}
+						},
+						error: function() { alert("查询失败，请检查网络"); }
+					});
+				});
+
+				const $phoneInput = $('#fb-phone');
+				const $messageInput = $('#fb-message');
+				const $submitBtn = $('#fb-submit-btn');
+				const $phoneError = $('#phone-error-msg');
+				const $charCountText = $('#current-chars');
+
+				// 状态管理
+				let isPhoneValid = false;
+				let isMessageValid = false;
+
+				// 1. 手机号正则验证 (中国大陆 11 位手机号)
+				$phoneInput.on('input propertychange', function() {
+					const val = $(this).val();
+					const phoneReg = /^1[3-9]\d{9}$/; // 验证1开头，第二位3-9的11位数字
+			
+					if (val.length === 0) {
+						$phoneError.hide();
+						$(this).removeClass('input-error');
+						isPhoneValid = false;
+					} else if (!phoneReg.test(val)) {
+						$phoneError.show();
+						$(this).addClass('input-error').removeClass('input-success');
+						isPhoneValid = false;
+					} else {
+						$phoneError.hide();
+						$(this).removeClass('input-error').addClass('input-success');
+						isPhoneValid = true;
+					}
+					validateForm();
+				});
+
+				// 2. 留言字数实时统计
+				$messageInput.on('input propertychange', function() {
+					const len = $(this).val().length;
+					$charCountText.text(len);
+					
+					// 临界值视觉提示
+					if (len >= 190) {
+						$charCountText.parent().css('color', '#ff4d4f');
+					} else {
+						$charCountText.parent().css('color', '#999');
+					}
+			
+					isMessageValid = len > 0 && len <= 200;
+					validateForm();
+				});
+
+				// 3. 表单提交按钮状态控制
+				function validateForm() {
+					// 只有手机号格式正确且留言不为空时，才启用发送按钮
+					if (isPhoneValid && isMessageValid) {
+						$submitBtn.prop('disabled', false);
+					} else {
+						$submitBtn.prop('disabled', true);
+					}
+				}
+			
+				
+
 				// 1. 点击圆球弹出/收起
 				$('#feedback-launcher').on('click', function(e) {
 					$('#feedback-window').stop().fadeToggle(300);
@@ -253,30 +389,23 @@
 				$(document).on('click', function() {
 					$('#feedback-window').fadeOut(300);
 				});
+
+				// 初始化时先禁用按钮
+				validateForm();
 			});
 			$('#feedback-form').submit(function(e) {
-				e.preventDefault(); // 阻止页面刷新
-				
+				e.preventDefault();
 				$.ajax({
-					url: "/contactApp/quick_feedback/",  // 请确保你的 urls.py 里这个路径是对的
+					url: "{% url 'contactApp:quick_feedback' %}",
 					type: "POST",
 					data: $(this).serialize(),
 					success: function(data) {
 						if (data.status === 'success') {
-							// 1. 弹出感谢语
-							alert("感谢提交！我们会尽快回复您。");
-							
-							// 2. 清空表单内容
+							alert("提交成功！您可以切换到查询界面查看进度。");
 							$('#feedback-form')[0].reset();
-							
-							// 3. 自动收起小窗口
-							$('#feedback-window').fadeOut(300);
 						} else {
-							alert("提交失败：" + data.msg);
+							alert("错误：" + data.msg);
 						}
-					},
-					error: function() {
-						alert("网络连接失败，请稍后再试。");
 					}
 				});
 			});

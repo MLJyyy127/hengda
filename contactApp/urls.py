@@ -7,5 +7,6 @@ app_name='contactApp'  # 人才招聘
 urlpatterns = [
     path('contact/', views.contact, name='contact'), # 欢迎咨询
     path('recruit/', views.recruit, name='recruit'),  # 加入恒达
-    path('quick_feedback/', views.quick_feedback, name='quick_feedback') # 留言
+    path('quick_feedback/', views.quick_feedback, name='quick_feedback'), # 留言
+    path('query_feedback/', views.query_feedback, name='query_feedback') # 查询接口
 ]
